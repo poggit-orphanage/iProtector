@@ -1,10 +1,10 @@
 name: iProtector
-author: LDX
+author: LDX, PMMP Revival
 version: 3.1b
 main: LDX\iProtector\Main
 load: POSTWORLD
-api: [1.9.0, 2.0.0]
-website: "https://github.com/LDX-MCPE/iProtector"
+api: [1.9.0, 2.0.0, 3.0.0, 3.0.0-ALPHA1, 3.0.0-ALPHA2]
+website: "https://github.com/LDX-MCPE/iProtector, https://github.com/RevivalPMMP/iProtector"
 commands:
   area:
     description: "Allows you to manage areas."

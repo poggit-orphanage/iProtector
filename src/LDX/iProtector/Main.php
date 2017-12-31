@@ -19,6 +19,16 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use pocketmine\Server;
 
+// fork edit genboy
+use pocketmine\event\player\PlayerMoveEvent;
+
+/* Genboy fork todo
+ * add custom enter/leave messages to area object
+ * add custom enter/leave command string exec
+ */
+
+
+
 class Main extends PluginBase implements Listener{
 
 	/** @var array */
@@ -43,20 +53,32 @@ class Main extends PluginBase implements Listener{
 	/** @var Vector3[] */
 	private $secondPosition = [];
 
+
+	/** @var string */
+	private $currentArea = '';
+
+
 	public function onEnable() : void{
+
+
+
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
+
 		if(!is_dir($this->getDataFolder())){
 			mkdir($this->getDataFolder());
 		}
+
 		if(!file_exists($this->getDataFolder() . "areas.json")){
 			file_put_contents($this->getDataFolder() . "areas.json", "[]");
 		}
+
 		if(!file_exists($this->getDataFolder() . "config.yml")){
 			$c = $this->getResource("config.yml");
 			$o = stream_get_contents($c);
 			fclose($c);
 			file_put_contents($this->getDataFolder() . "config.yml", str_replace("DEFAULT", $this->getServer()->getDefaultLevel()->getName(), $o));
 		}
+
 		$data = json_decode(file_get_contents($this->getDataFolder() . "areas.json"), true);
 		foreach($data as $datum){
 			new Area($datum["name"], $datum["flags"], new Vector3($datum["pos1"]["0"], $datum["pos1"]["1"], $datum["pos1"]["2"]), new Vector3($datum["pos2"]["0"], $datum["pos2"]["1"], $datum["pos2"]["2"]), $datum["level"], $datum["whitelist"], $this);
@@ -70,7 +92,14 @@ class Main extends PluginBase implements Listener{
 		foreach($c["Worlds"] as $level => $flags){
 			$this->levels[$level] = $flags;
 		}
+
+		// fork edit genboy
+		$this->getLogger()->info(TextFormat::GREEN . "iProtector by poggit-orphanage/Genboy fork enabled!");
+
 	}
+
+
+
 
 	public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args) : bool{
 		if(!($sender instanceof Player)){
@@ -313,6 +342,7 @@ class Main extends PluginBase implements Listener{
 			$o = false;
 		}
 		foreach($this->areas as $area){
+
 			if($area->contains(new Vector3($entity->getX(), $entity->getY(), $entity->getZ()), $entity->getLevel()->getName())){
 				if($default && !$area->getFlag("god")){
 					$o = true;
@@ -463,4 +493,144 @@ class Main extends PluginBase implements Listener{
 		}
 	}
 
+
+
+
+
+	// Fork Genboy edit
+
+	public function onMove(PlayerMoveEvent $ev)
+    {
+
+		$player = $ev->getPlayer();
+		$playerName = strtolower($player->getName());
+
+		/** @var string **/
+		$prevArea = $this->currentArea;
+
+		/* pos test
+		$player->sendMessage(TextFormat::GREEN . "Current pos: y ". $ev->getTo()->getFloorY() .", x ". $ev->getTo()->getFloorX().", z ". $ev->getTo()->getFloorZ() );
+		*/
+
+		// inside area test
+		foreach($this->areas as $area){
+
+			/* area properties
+			$areas[] = ["name" => $area->getName(), "flags" => $area->getFlags(), "pos1" => [$area->getFirstPosition()->getFloorX(), $area->getFirstPosition()->getFloorY(), $area->getFirstPosition()->getFloorZ()] , "pos2" => [$area->getSecondPosition()->getFloorX(), $area->getSecondPosition()->getFloorY(), $area->getSecondPosition()->getFloorZ()], "level" => $area->getLevelName(), "whitelist" => $area->getWhitelist()];
+			*/
+
+			/*
+			 * Enter and leave messages / triggers
+			 */
+			if( $this->isInside($area, $ev) ){
+
+				// enter in area?
+				if( $prevArea != $area->getName() || $prevArea == '' ){
+
+					$this->currentArea = $area->getName();
+					if( $prevArea == ''){
+
+						// enter area
+						$msg = TextFormat::GREEN . "Enter area ". $area->getName();
+						$player->sendMessage( $msg );
+
+					}else{
+						// enter area, leave other area
+						$msg = TextFormat::GREEN . "Leaving ". $prevArea . ", enter area ". $area->getName();
+						$player->sendMessage( $msg );
+					}
+				}
+
+			}else{
+
+				// leaving area
+				if( $this->currentArea != '' ){
+
+					$msg = TextFormat::RED . "Leaving area ". $this->currentArea;
+
+					$this->currentArea = '';
+					$prevArea = '';
+
+					$player->sendMessage( $msg );
+
+				}
+
+			}
+
+		}
+
+ 	}
+
+	/*
+	 * Player inside area?
+	 * return @var bool
+	 */
+	public function isInside($area, $ev){
+
+		$areapos = $this->areaMinMax($area);
+
+		$plrX = $ev->getTo()->getFloorX();
+		$plrY = $ev->getTo()->getFloorY();
+		$plrZ = $ev->getTo()->getFloorZ();
+
+
+		if( $plrX >= $areapos['xmin'] && $plrX <= $areapos['xmax'] &&
+		  	$plrY >= $areapos['ymin'] && $plrY <= $areapos['ymax'] &&
+		  	$plrZ >= $areapos['zmin'] && $plrZ <= $areapos['zmax'] ){
+			return true;
+		}else{
+			return false;
+		}
+
+	}
+
+
+	/*
+	 * Area min/max pos order for difference player pos
+	 * return @var array
+	 */
+	public function areaMinMax($area){
+
+		if( $area->getFirstPosition()->getFloorX() > $area->getSecondPosition()->getFloorX()){
+			$aXmin = $area->getSecondPosition()->getFloorX();
+			$aXmax = $area->getFirstPosition()->getFloorX();
+		}else{
+			$aXmin = $area->getFirstPosition()->getFloorX();
+			$aXmax = $area->getSecondPosition()->getFloorX();
+		}
+		if( $area->getFirstPosition()->getFloorY() > $area->getSecondPosition()->getFloorY()){
+			$aYmin = $area->getSecondPosition()->getFloorY();
+			$aYmax = $area->getFirstPosition()->getFloorY();
+		}else{
+			$aYmin = $area->getFirstPosition()->getFloorY();
+			$aYmax = $area->getSecondPosition()->getFloorY();
+		}
+		if( $area->getFirstPosition()->getFloorZ() > $area->getSecondPosition()->getFloorZ()){
+			$aZmin = $area->getSecondPosition()->getFloorZ();
+			$aZmax = $area->getFirstPosition()->getFloorZ();
+		}else{
+			$aZmin = $area->getFirstPosition()->getFloorZ();
+			$aZmax = $area->getSecondPosition()->getFloorZ();
+		}
+
+		return array( 'xmin'=>$aXmin, 'xmax'=>$aXmax, 'ymin'=>$aYmin, 'ymax'=>$aYmax, 'zmin'=>$aZmin, 'zmax'=>$aZmax );
+
+	}
+
+
+
+	// end Fork Genboy edit
+
+	/* sources & examples
+
+	- https://forums.pmmp.io/threads/keep-getting-this-errors.2904/
+	- http://forums.pocketmine.net/threads/position-playermoveevent.18220/
+	- https://github.com/if-Team/PMMP-Plugins/blob/master/SpeedBlock/src/Khinenw/SpeedBlock/SpeedBlock.php
+	- https://github.com/genboy/FloatingTexter/blob/master/src/FloatingTexter/RefreshTask.php
+
+	*/
+
 }
+
+
+

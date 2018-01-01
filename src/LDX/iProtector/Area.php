@@ -24,13 +24,17 @@ class Area{
 	/** @var Main */
 	private $plugin;
 
-	public function __construct(string $name, array $flags, Vector3 $pos1, Vector3 $pos2, string $levelName, array $whitelist, Main $plugin){
+	/** @var areatext[] */
+	private $areatext;
+
+	public function __construct(string $name, array $flags, Vector3 $pos1, Vector3 $pos2, string $levelName, array $whitelist, array $areatext, Main $plugin){
 		$this->name = strtolower($name);
 		$this->flags = $flags;
 		$this->pos1 = $pos1;
 		$this->pos2 = $pos2;
 		$this->levelName = $levelName;
 		$this->whitelist = $whitelist;
+		$this->areatext = $areatext;
 		$this->plugin = $plugin;
 		$this->save();
 	}
@@ -179,6 +183,41 @@ class Area{
 	public function getWhitelist() : array{
 		return $this->whitelist;
 	}
+
+
+	/**
+	 * @return array[]
+	 */
+	public function getAreaText() : array{
+		return $this->areatext;
+	}
+	/**
+	 * @param string $field
+	 * @param string   $value
+	 *
+	 * @return bool
+	 */
+	public function setAreaTextField(string $field, string $value) : bool{
+		if(isset($field)){
+			$this->areatext[$field] = $value;
+			$this->plugin->saveAreas();
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * @param string $field
+	 *
+	 * @return string
+	 */
+	public function getAreaTextField(string $field) : string{
+		if(isset($this->areatext[$field])){
+			return $this->areatext[$field];
+		}
+		return '';
+	}
+
+
 
 	public function delete() : void{
 		unset($this->plugin->areas[$this->getName()]);

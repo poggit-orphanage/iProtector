@@ -18,6 +18,8 @@ use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use pocketmine\Server;
+// edit genboy
+use pocketmine\event\player\PlayerMoveEvent;
 
 class Main extends PluginBase implements Listener{
 
@@ -43,7 +45,19 @@ class Main extends PluginBase implements Listener{
 	/** @var Vector3[] */
 	private $secondPosition = [];
 
+	/** @var string (genboy fork) */
+	private $inArea = '';
+
+	/** @var string (genboy fork) */
+	private $lastArea = '';
+
+
+	// + textArea[]  Genboy edit
 	public function onEnable() : void{
+
+		// fork notice genboy
+		$this->getLogger()->info(TextFormat::GREEN . "iProtector by poggit-orphanage/Genboy fork enabled!");
+
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 		if(!is_dir($this->getDataFolder())){
 			mkdir($this->getDataFolder());
@@ -59,7 +73,8 @@ class Main extends PluginBase implements Listener{
 		}
 		$data = json_decode(file_get_contents($this->getDataFolder() . "areas.json"), true);
 		foreach($data as $datum){
-			new Area($datum["name"], $datum["flags"], new Vector3($datum["pos1"]["0"], $datum["pos1"]["1"], $datum["pos1"]["2"]), new Vector3($datum["pos2"]["0"], $datum["pos2"]["1"], $datum["pos2"]["2"]), $datum["level"], $datum["whitelist"], $this);
+			// + textArea[]  Genboy edit
+			new Area($datum["name"], $datum["flags"], new Vector3($datum["pos1"]["0"], $datum["pos1"]["1"], $datum["pos1"]["2"]), new Vector3($datum["pos2"]["0"], $datum["pos2"]["1"], $datum["pos2"]["2"]), $datum["level"], $datum["whitelist"], $datum["areatext"], $this);
 		}
 		$c = yaml_parse_file($this->getDataFolder() . "config.yml");
 
@@ -115,7 +130,7 @@ class Main extends PluginBase implements Listener{
 					if(isset($args[1])){
 						if(isset($this->firstPosition[$playerName], $this->secondPosition[$playerName])){
 							if(!isset($this->areas[strtolower($args[1])])){
-								new Area(strtolower($args[1]), ["edit" => true, "god" => false, "touch" => true], $this->firstPosition[$playerName], $this->secondPosition[$playerName], $sender->getLevel()->getName(), [$playerName], $this);
+								new Area(strtolower($args[1]), ["edit" => true, "god" => false, "touch" => true], $this->firstPosition[$playerName], $this->secondPosition[$playerName], $sender->getLevel()->getName(), [$playerName], array(), $this);
 								$this->saveAreas();
 								unset($this->firstPosition[$playerName], $this->secondPosition[$playerName]);
 								$o = TextFormat::AQUA . "Area created!";
@@ -285,6 +300,51 @@ class Main extends PluginBase implements Listener{
 					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
 				}
 				break;
+
+
+			// + text  Genboy edit
+			case "text":
+				if($sender->hasPermission("iprotector") || $sender->hasPermission("iprotector.command") || $sender->hasPermission("iprotector.command.area") || $sender->hasPermission("iprotector.command.area.flag")){
+					if(isset($args[1])){
+						if(isset($this->areas[strtolower($args[1])])){
+							$area = $this->areas[strtolower($args[1])];
+							if(isset($args[2])){
+									$field = strtolower($args[2]);
+									// clean args string
+									unset($args[0]);
+									unset($args[1]);
+									unset($args[2]);
+									$text = implode(" ", $args);
+									if( ( $field == 'enter' ||  $field == 'info' || $field == 'url' ) && $text !== "" ){
+										if( trim( $text, " ") !== ""){
+											$area->setAreaTextField($field, $text); // ( should validate last string also.. ! )
+											$o = TextFormat::GREEN . "Updated ". $area->getName() ." textfield ". $field ." with '". $text ."'";
+										}else{
+											$area->setAreaTextField($field, 'Enter area');
+											$o = TextFormat::RED . "Replaced ". $area->getName() ." textfield ". $field ." with default string.";
+										}
+									}else if( $field == 'list'){
+										$o = TextFormat::AQUA . "Area " . $area->getName() . "'s text:" . TextFormat::RESET;
+										foreach($area->getAreaText() as $f => $w){
+											$o .= "\n$f: $w; ";
+										}
+									} // end field set
+							}else{
+								$o = TextFormat::RED . "Please specify a textfield. ( /area text <area> <enter/info/url> <textstring> )";
+							}
+						}else{
+							$o = TextFormat::RED . "Area doesn't exist.";
+						}
+					}else{
+						$o = TextFormat::RED . "Please specify the area you would like to add text to.";
+					}
+				}else{
+					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
+				}
+				break;
+			// end + text Genboy edit
+
+
 			default:
 				return false;
 		}
@@ -296,7 +356,8 @@ class Main extends PluginBase implements Listener{
 	public function saveAreas() : void{
 		$areas = [];
 		foreach($this->areas as $area){
-			$areas[] = ["name" => $area->getName(), "flags" => $area->getFlags(), "pos1" => [$area->getFirstPosition()->getFloorX(), $area->getFirstPosition()->getFloorY(), $area->getFirstPosition()->getFloorZ()] , "pos2" => [$area->getSecondPosition()->getFloorX(), $area->getSecondPosition()->getFloorY(), $area->getSecondPosition()->getFloorZ()], "level" => $area->getLevelName(), "whitelist" => $area->getWhitelist()];
+			// + textArea[]  Genboy edit
+			$areas[] = ["name" => $area->getName(), "flags" => $area->getFlags(), "pos1" => [$area->getFirstPosition()->getFloorX(), $area->getFirstPosition()->getFloorY(), $area->getFirstPosition()->getFloorZ()] , "pos2" => [$area->getSecondPosition()->getFloorX(), $area->getSecondPosition()->getFloorY(), $area->getSecondPosition()->getFloorZ()], "level" => $area->getLevelName(), "whitelist" => $area->getWhitelist(), "areatext" => $area->getAreaText()];
 		}
 		file_put_contents($this->getDataFolder() . "areas.json", json_encode($areas));
 	}
@@ -462,5 +523,111 @@ class Main extends PluginBase implements Listener{
 			}
 		}
 	}
+
+
+	// start Genboy edit
+	public function onMove(PlayerMoveEvent $ev)
+    {
+
+		$player = $ev->getPlayer(); // get player event
+		$playerName = strtolower($player->getName());
+
+		$playerarea = ''; // area check
+		foreach($this->areas as $area){
+			if( $this->isInside($area, $ev) ){
+				$playerarea = $area;
+			}
+		}
+
+		if( $playerarea != '' ){ // in Area..
+
+			$this->inArea = $playerarea->getName();
+
+			if( $this->lastArea != $this->inArea ){ // just entered
+
+				// leaving Area
+				if( $this->lastArea != '' ){
+					$player->sendMessage( TextFormat::RED ."Leaving area ". $this->lastArea );
+				}
+				$this->lastArea = $this->inArea;
+
+				// Enter Area
+				$msg = TextFormat::GREEN ."Enter area ". $this->inArea;
+				if( !empty( $playerarea->getAreaTextField("info") ) ){
+						$msg .= "\n". TextFormat::AQUA . $playerarea->getAreaTextField('info');
+				}
+
+				$player->sendMessage( $msg );
+
+			}
+
+		}else{
+
+			// no area
+			$this->inArea = '';
+
+			// leaving Area
+			if( $this->lastArea != '' ){
+				$player->sendMessage( TextFormat::RED ."Leaving area ". $this->lastArea );
+				$this->lastArea = '';
+			}
+
+		}
+
+ 	}
+
+	/*
+	 * Player inside area?
+	 * return @var bool
+	 */
+	public function isInside($area, $ev){
+		$areapos = $this->areaMinMax($area);
+		$plrX = $ev->getTo()->getFloorX();
+		$plrY = $ev->getTo()->getFloorY();
+		$plrZ = $ev->getTo()->getFloorZ();
+		if( $plrX >= $areapos['xmin'] && $plrX <= $areapos['xmax'] &&
+		  	$plrY >= $areapos['ymin'] && $plrY <= $areapos['ymax'] &&
+		  	$plrZ >= $areapos['zmin'] && $plrZ <= $areapos['zmax'] ){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	/*
+	 * Area min/max pos order for difference player pos
+	 * return @var array
+	 */
+	public function areaMinMax($area){
+		if( $area->getFirstPosition()->getFloorX() > $area->getSecondPosition()->getFloorX()){
+			$aXmin = $area->getSecondPosition()->getFloorX();
+			$aXmax = $area->getFirstPosition()->getFloorX();
+		}else{
+			$aXmin = $area->getFirstPosition()->getFloorX();
+			$aXmax = $area->getSecondPosition()->getFloorX();
+		}
+		if( $area->getFirstPosition()->getFloorY() > $area->getSecondPosition()->getFloorY()){
+			$aYmin = $area->getSecondPosition()->getFloorY();
+			$aYmax = $area->getFirstPosition()->getFloorY();
+		}else{
+			$aYmin = $area->getFirstPosition()->getFloorY();
+			$aYmax = $area->getSecondPosition()->getFloorY();
+		}
+		if( $area->getFirstPosition()->getFloorZ() > $area->getSecondPosition()->getFloorZ()){
+			$aZmin = $area->getSecondPosition()->getFloorZ();
+			$aZmax = $area->getFirstPosition()->getFloorZ();
+		}else{
+			$aZmin = $area->getFirstPosition()->getFloorZ();
+			$aZmax = $area->getSecondPosition()->getFloorZ();
+		}
+		return array( 'xmin'=>$aXmin, 'xmax'=>$aXmax, 'ymin'=>$aYmin, 'ymax'=>$aYmax, 'zmin'=>$aZmin, 'zmax'=>$aZmax );
+	}
+	// end Genboy edit
+	/* sources & examples
+	- https://forums.pmmp.io/threads/keep-getting-this-errors.2904/
+	- http://forums.pocketmine.net/threads/position-playermoveevent.18220/
+	- https://github.com/if-Team/PMMP-Plugins/blob/master/SpeedBlock/src/Khinenw/SpeedBlock/SpeedBlock.php
+	- https://github.com/genboy/FloatingTexter/blob/master/src/FloatingTexter/RefreshTask.php
+	*/
+
 
 }

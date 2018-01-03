@@ -45,14 +45,25 @@ class Main extends PluginBase implements Listener{
 	/** @var Vector3[] */
 	private $secondPosition = [];
 
-	/** @var string (genboy fork) */
+
+	// + default enter/leave text
+	// + player inArea string areaname and lastArea string areaname Genboy edit
+
+
+	/** @var string  */
+	private $entertext = '';
+
+	/** @var string  */
+	private $leavetext = '';
+
+	/** @var string  */
 	private $inArea = '';
 
 	/** @var string (genboy fork) */
 	private $lastArea = '';
 
 
-	// + textArea[]  Genboy edit
+
 	public function onEnable() : void{
 
 		// fork notice genboy
@@ -81,6 +92,9 @@ class Main extends PluginBase implements Listener{
 		$this->god = $c["Default"]["God"];
 		$this->edit = $c["Default"]["Edit"];
 		$this->touch = $c["Default"]["Touch"];
+
+		$this->entertext = $c["Text"]["Enter"];
+		$this->leavetext = $c["Text"]["Leave"];
 
 		foreach($c["Worlds"] as $level => $flags){
 			$this->levels[$level] = $flags;
@@ -550,18 +564,21 @@ class Main extends PluginBase implements Listener{
 		if( $playerarea != '' ){ // in Area..
 			$this->inArea = $playerarea->getName();
 			if( $this->lastArea != $this->inArea ){ // just entered
-				$this->onEnterArea($area, $ev);
+				$this->onEnterArea($playerarea, $ev);
 			}
 		}else{
 			// no area
 			$this->inArea = '';
 			// leaving Area
 			if( $this->lastArea != '' ){
-				$this->onLeaveArea($area, $ev);
+				$this->onLeaveArea($playerarea, $ev);
 			}
 		}
 
  	}
+
+
+
 
 	/*
 	 * Enter area
@@ -573,12 +590,16 @@ class Main extends PluginBase implements Listener{
 
 		// leaving Area
 		if( $this->lastArea != '' ){
-			$player->sendMessage( TextFormat::RED ."Leaving area ". $this->lastArea );
+			$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
 		}
 		$this->lastArea = $this->inArea;
 
 		// Enter Area
-		$msg = TextFormat::GREEN ."Enter area ". $this->inArea;
+		$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea; // default
+
+		if( !empty( $area->getAreaTextField("enter") ) ){
+			$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
+		}
 
 		if( !empty( $area->getAreaTextField("info") ) ){
 			$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
@@ -597,7 +618,7 @@ class Main extends PluginBase implements Listener{
 	public function onLeaveArea($area, $ev){
 
 		$player = $ev->getPlayer();
-		$player->sendMessage( TextFormat::RED ."Leaving area ". $this->lastArea );
+		$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
 		$this->lastArea = '';
 
 	}
@@ -607,6 +628,7 @@ class Main extends PluginBase implements Listener{
 	 * return @var bool
 	 */
 	public function isInside($area, $ev){
+
 		$areapos = $this->areaMinMax($area);
 		$plrX = $ev->getTo()->getFloorX();
 		$plrY = $ev->getTo()->getFloorY();

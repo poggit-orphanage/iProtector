@@ -538,40 +538,30 @@ class Main extends PluginBase implements Listener{
 
 		$player = $ev->getPlayer(); // get player event
 		$playerName = strtolower($player->getName());
-		$playerarea = ''; // area check
+		$playerarea = '';
 
+		// area check
 		foreach($this->areas as $area){
 			if( $this->isInside($area, $ev) ){
 				$playerarea = $area;
 			}
 		}
 
-			if( $playerarea != '' ){ // in Area..
-
-				$this->inArea = $playerarea->getName();
-
-				if( $this->lastArea != $this->inArea ){ // just entered
-
-					$this->onEnterArea($area, $ev);
-
-				}
-
-			}else{
-
-				// no area
-				$this->inArea = '';
-
-				// leaving Area
-				if( $this->lastArea != '' ){
-
-					$this->onLeaveArea($area, $ev);
-
-				}
-
+		if( $playerarea != '' ){ // in Area..
+			$this->inArea = $playerarea->getName();
+			if( $this->lastArea != $this->inArea ){ // just entered
+				$this->onEnterArea($area, $ev);
 			}
+		}else{
+			// no area
+			$this->inArea = '';
+			// leaving Area
+			if( $this->lastArea != '' ){
+				$this->onLeaveArea($area, $ev);
+			}
+		}
 
  	}
-
 
 	/*
 	 * Enter area

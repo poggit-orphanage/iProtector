@@ -49,6 +49,8 @@ class Main extends PluginBase implements Listener{
 	// + default enter/leave text
 	// + player inArea string areaname and lastArea string areaname Genboy edit
 
+	/** @var bool */
+	private $textmsg = false;
 
 	/** @var string  */
 	private $entertext = '';
@@ -93,6 +95,8 @@ class Main extends PluginBase implements Listener{
 		$this->edit = $c["Default"]["Edit"];
 		$this->touch = $c["Default"]["Touch"];
 
+		// + text[]  Genboy edit
+		$this->textmsg = $c["Text"]["Textmsg"];
 		$this->entertext = $c["Text"]["Enter"];
 		$this->leavetext = $c["Text"]["Leave"];
 
@@ -588,24 +592,40 @@ class Main extends PluginBase implements Listener{
 
 		$player = $ev->getPlayer();
 
-		// leaving Area
-		if( $this->lastArea != '' ){
-			$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
+		if( $this->textmsg == true   ){
+
+			// leaving Area
+			if( $this->lastArea != '' ){
+				$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
+			}
+
+
+			// Enter Area
+			if( $area->getAreaTextField("info") != 'off' ){
+
+
+			$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea; // default
+
+			if( !empty( $area->getAreaTextField("enter") ) ){
+				$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
+			}
+
+			if( !empty( $area->getAreaTextField("info") ) ){
+				$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
+			}
+
+			$player->sendMessage( $msg );
+
+			$this->lastArea = $this->inArea;
+
+			}else{
+
+			// emtpy last area
+			$this->lastArea = '';
+
+			}
 		}
-		$this->lastArea = $this->inArea;
 
-		// Enter Area
-		$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea; // default
-
-		if( !empty( $area->getAreaTextField("enter") ) ){
-			$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
-		}
-
-		if( !empty( $area->getAreaTextField("info") ) ){
-			$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
-		}
-
-		$player->sendMessage( $msg );
 
 	}
 
@@ -618,7 +638,12 @@ class Main extends PluginBase implements Listener{
 	public function onLeaveArea($area, $ev){
 
 		$player = $ev->getPlayer();
+
+		if($this->textmsg == true ){
+
 		$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
+
+		}
 		$this->lastArea = '';
 
 	}

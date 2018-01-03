@@ -525,56 +525,92 @@ class Main extends PluginBase implements Listener{
 	}
 
 
-	// start Genboy edit
+
+
+
+	/*
+	 * start Genboy fork edit
+	 * onMove event
+	 *
+	 */
 	public function onMove(PlayerMoveEvent $ev)
     {
 
 		$player = $ev->getPlayer(); // get player event
 		$playerName = strtolower($player->getName());
-
 		$playerarea = ''; // area check
+
 		foreach($this->areas as $area){
 			if( $this->isInside($area, $ev) ){
 				$playerarea = $area;
 			}
 		}
 
-		if( $playerarea != '' ){ // in Area..
+			if( $playerarea != '' ){ // in Area..
 
-			$this->inArea = $playerarea->getName();
+				$this->inArea = $playerarea->getName();
 
-			if( $this->lastArea != $this->inArea ){ // just entered
+				if( $this->lastArea != $this->inArea ){ // just entered
+
+					$this->onEnterArea($area, $ev);
+
+				}
+
+			}else{
+
+				// no area
+				$this->inArea = '';
 
 				// leaving Area
 				if( $this->lastArea != '' ){
-					$player->sendMessage( TextFormat::RED ."Leaving area ". $this->lastArea );
-				}
-				$this->lastArea = $this->inArea;
 
-				// Enter Area
-				$msg = TextFormat::GREEN ."Enter area ". $this->inArea;
-				if( !empty( $playerarea->getAreaTextField("info") ) ){
-						$msg .= "\n". TextFormat::AQUA . $playerarea->getAreaTextField('info');
+					$this->onLeaveArea($area, $ev);
+
 				}
 
-				$player->sendMessage( $msg );
-
 			}
-
-		}else{
-
-			// no area
-			$this->inArea = '';
-
-			// leaving Area
-			if( $this->lastArea != '' ){
-				$player->sendMessage( TextFormat::RED ."Leaving area ". $this->lastArea );
-				$this->lastArea = '';
-			}
-
-		}
 
  	}
+
+
+	/*
+	 * Enter area
+	 * return @var obj area, event
+	 */
+	public function onEnterArea($area, $ev){
+
+		$player = $ev->getPlayer();
+
+		// leaving Area
+		if( $this->lastArea != '' ){
+			$player->sendMessage( TextFormat::RED ."Leaving area ". $this->lastArea );
+		}
+		$this->lastArea = $this->inArea;
+
+		// Enter Area
+		$msg = TextFormat::GREEN ."Enter area ". $this->inArea;
+
+		if( !empty( $area->getAreaTextField("info") ) ){
+			$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
+		}
+
+		$player->sendMessage( $msg );
+
+	}
+
+
+
+	/*
+	 * Leave area
+	 * return @var area, event
+	 */
+	public function onLeaveArea($area, $ev){
+
+		$player = $ev->getPlayer();
+		$player->sendMessage( TextFormat::RED ."Leaving area ". $this->lastArea );
+		$this->lastArea = '';
+
+	}
 
 	/*
 	 * Player inside area?
@@ -621,8 +657,9 @@ class Main extends PluginBase implements Listener{
 		}
 		return array( 'xmin'=>$aXmin, 'xmax'=>$aXmax, 'ymin'=>$aYmin, 'ymax'=>$aYmax, 'zmin'=>$aZmin, 'zmax'=>$aZmax );
 	}
-	// end Genboy edit
-	/* sources & examples
+	/*
+	 * end Genboy edit
+	 * sources & examples
 	- https://forums.pmmp.io/threads/keep-getting-this-errors.2904/
 	- http://forums.pocketmine.net/threads/position-playermoveevent.18220/
 	- https://github.com/if-Team/PMMP-Plugins/blob/master/SpeedBlock/src/Khinenw/SpeedBlock/SpeedBlock.php

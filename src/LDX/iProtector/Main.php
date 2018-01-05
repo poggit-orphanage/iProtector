@@ -6,6 +6,7 @@ namespace LDX\iProtector;
 
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\command\ConsoleCommandSender;
 use pocketmine\entity\Entity;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
@@ -18,6 +19,7 @@ use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use pocketmine\Server;
+
 // edit genboy
 use pocketmine\event\player\PlayerMoveEvent;
 
@@ -27,6 +29,8 @@ class Main extends PluginBase implements Listener{
 	private $levels = [];
 	/** @var Area[] */
 	public $areas = [];
+	/** @var Area[] */
+	public $events = [];
 
 	/** @var bool */
 	private $god = false;
@@ -103,6 +107,21 @@ class Main extends PluginBase implements Listener{
 		foreach($c["Worlds"] as $level => $flags){
 			$this->levels[$level] = $flags;
 		}
+
+		// + events[]
+		if(!file_exists($this->getDataFolder() . "events.json")){
+			file_put_contents($this->getDataFolder() . "events.json", "[]");
+		}
+		$eventdata = json_decode(file_get_contents($this->getDataFolder() . "events.json"), true);
+		foreach($eventdata as $event){
+			// + textArea[]  Genboy edit
+			new Events($event["eventname"], $event["eventflags"], $event["areaname"], $event["eventtime"],  $event["eventcommand"],  $event["eventpoints"], $this);
+		}
+
+		// areaEvents check
+		$this->getLogger()->info(TextFormat::RED . count($this->areas) . " areas set," . count($this->events) . " area events found");
+
+
 	}
 
 	public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args) : bool{
@@ -592,37 +611,49 @@ class Main extends PluginBase implements Listener{
 
 		$player = $ev->getPlayer();
 
+
+		// area messages
 		if( $this->textmsg == true   ){
 
 			// leaving Area
 			if( $this->lastArea != '' ){
 				$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
 			}
-
-
 			// Enter Area
 			if( $area->getAreaTextField("info") != 'off' ){
 
+				$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea; // default
 
-			$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea; // default
+				if( !empty( $area->getAreaTextField("enter") ) ){
+					$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
+				}
 
-			if( !empty( $area->getAreaTextField("enter") ) ){
-				$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
-			}
+				if( !empty( $area->getAreaTextField("info") ) ){
+					$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
+				}
 
-			if( !empty( $area->getAreaTextField("info") ) ){
-				$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
-			}
+				$player->sendMessage( $msg );
 
-			$player->sendMessage( $msg );
-
-			$this->lastArea = $this->inArea;
+				$this->lastArea = $this->inArea;
 
 			}else{
 
 			// emtpy last area
 			$this->lastArea = '';
 
+			}
+		}
+
+		// area events
+		if( $areaevents = $this->getAreaEvents($area, $ev) ){
+			$player->sendMessage( TextFormat::RED . count($areaevents) . " events in area " . $area->name );
+			foreach( $areaevents as $event){
+				if( count($event->eventcommand) > 0 ){
+					foreach($event->eventcommand as $command){
+						$this->getServer()->dispatchCommand(new ConsoleCommandSender(), $command);
+						//$server->dispatchCommand(new ConsoleCommandSender(), $command);
+					}
+				}
 			}
 		}
 
@@ -647,6 +678,53 @@ class Main extends PluginBase implements Listener{
 		$this->lastArea = '';
 
 	}
+
+	/*
+	 * Area Event
+	 * return @var area, event
+	 */
+	public function getAreaEvents($area, $ev){
+
+		$player = $ev->getPlayer();
+		$areaevents = [];
+
+		if( count($this->events) > 0 ){
+			$e = 0;
+			foreach($this->events as $event){
+			 	//$events[] = ["eventname" => $event->eventname, "eventflags" => $event->eventflags, "areaname" => $event->areaname, "eventtime" => $event->eventtime, "eventcommand" => $event->eventcommand, "eventpoints" => $event->eventpoints ];
+				if( $area->name ==  $event->areaname ){
+					$areaevents[$e] = $event;
+				$e++;
+				}
+			}
+
+		}
+
+
+		if( count($areaevents) > 0 ){
+			return $areaevents;
+		}else{
+			return false;
+		}
+
+	}
+
+
+	/*  + events[]  Genboy edit
+	 * Events
+	 */
+	public function saveEvents() : void{
+		$events = [];
+		foreach($this->events as $event){
+			$events[] = ["eventname" => $event->eventname, "eventflags" => $event->eventflags, "areaname" => $event->areaname, "eventtime" => $event->eventtime, "eventcommand" => $event->eventcommand, "eventpoints" => $event->eventpoints ];
+
+			//$events[] = ["name" => $area->getName(), "flags" => $area->getFlags(), "pos1" => [$area->getFirstPosition()->getFloorX(), $area->getFirstPosition()->getFloorY(), $area->getFirstPosition()->getFloorZ()] , "pos2" => [$area->getSecondPosition()->getFloorX(), $area->getSecondPosition()->getFloorY(), $area->getSecondPosition()->getFloorZ()], "level" => $area->getLevelName(), "whitelist" => $area->getWhitelist(), "areatext" => $area->getAreaText()];
+		}
+		file_put_contents($this->getDataFolder() . "events.json", json_encode($events));
+	}
+
+
+
 
 	/*
 	 * Player inside area?

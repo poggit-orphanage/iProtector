@@ -12,7 +12,7 @@ class Area{
 	/** @var bool[] */
 	public $flags;
 	/** @var string */
-	private $name;
+	public $name;
 	/** @var Vector3 */
 	private $pos1;
 	/** @var Vector3 */

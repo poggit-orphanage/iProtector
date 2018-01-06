@@ -119,7 +119,7 @@ class Main extends PluginBase implements Listener{
 		}
 
 		// areaEvents check
-		$this->getLogger()->info(TextFormat::RED . count($this->areas) . " areas set," . count($this->events) . " area events found");
+		$this->getLogger()->info(TextFormat::RED . count($this->areas) . " areas set, " . count($this->events) . " area events found");
 
 
 	}
@@ -610,84 +610,71 @@ class Main extends PluginBase implements Listener{
 	public function onEnterArea($area, $ev){
 
 		$player = $ev->getPlayer();
-
-
 		// area messages
 		if( $this->textmsg == true   ){
-
 			// leaving Area
 			if( $this->lastArea != '' ){
 				$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
 			}
 			// Enter Area
 			if( $area->getAreaTextField("info") != 'off' ){
-
 				$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea; // default
-
 				if( !empty( $area->getAreaTextField("enter") ) ){
 					$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
 				}
-
 				if( !empty( $area->getAreaTextField("info") ) ){
 					$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
 				}
-
 				$player->sendMessage( $msg );
-
 				$this->lastArea = $this->inArea;
-
 			}else{
-
-			// emtpy last area
-			$this->lastArea = '';
-
+				$this->lastArea = ''; // emtpy last area
 			}
 		}
 
 		// area events
 		if( $areaevents = $this->getAreaEvents($area, $ev) ){
-			$player->sendMessage( TextFormat::RED . count($areaevents) . " events in area " . $area->name );
-			foreach( $areaevents as $event){
-				if( count($event->eventcommand) > 0 ){
-					foreach($event->eventcommand as $command){
-						$this->getServer()->dispatchCommand(new ConsoleCommandSender(), $command);
-						//$server->dispatchCommand(new ConsoleCommandSender(), $command);
-					}
+			foreach( $areaevents as $event){ // all events in this area
+				if( count($event->eventcommand) > 0 ){ // all commands for this event
+					$this->runAreaEventCommands($area,$ev,$event);
 				}
-			}
+			} //$player->sendMessage( TextFormat::RED . count($areaevents) . " events in area " . $area->name );
 		}
-
-
 	}
-
-
 
 	/*
 	 * Leave area
 	 * return @var area, event
 	 */
 	public function onLeaveArea($area, $ev){
-
 		$player = $ev->getPlayer();
-
 		if($this->textmsg == true ){
-
-		$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
-
+			$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
 		}
 		$this->lastArea = '';
-
 	}
+
+	/*
+	 * Run area event commands
+	 * return @var area, event
+	 */
+	public function runAreaEventCommands($area, $ev, $event){
+		// ..area center
+		// ..player pos & direction
+		// event/commmand method??
+		foreach( $event->eventcommand as $command){
+			$this->getServer()->dispatchCommand(new ConsoleCommandSender(), $command);
+		}
+	}
+
 
 	/*
 	 * Area Event
 	 * return @var area, event
 	 */
 	public function getAreaEvents($area, $ev){
-
 		$player = $ev->getPlayer();
 		$areaevents = [];
-
 		if( count($this->events) > 0 ){
 			$e = 0;
 			foreach($this->events as $event){
@@ -697,16 +684,13 @@ class Main extends PluginBase implements Listener{
 				$e++;
 				}
 			}
-
 		}
-
 
 		if( count($areaevents) > 0 ){
 			return $areaevents;
 		}else{
 			return false;
 		}
-
 	}
 
 

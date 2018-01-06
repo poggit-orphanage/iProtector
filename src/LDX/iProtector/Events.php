@@ -28,7 +28,8 @@ class Events {
 	public $eventcommand;
 	/** @var int */
 	public $eventpoints;
-
+	/** @var Main */
+	private $plugin;
 
 
 	public function __construct(string $eventname, array $eventflags, string $areaname, int $eventtime, array $eventcommand, int $eventpoints, Main $plugin){

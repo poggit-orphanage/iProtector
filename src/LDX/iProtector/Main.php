@@ -29,8 +29,6 @@ class Main extends PluginBase implements Listener{
 	private $levels = [];
 	/** @var Area[] */
 	public $areas = [];
-	/** @var Area[] */
-	public $events = [];
 
 	/** @var bool */
 	private $god = false;
@@ -108,6 +106,7 @@ class Main extends PluginBase implements Listener{
 			$this->levels[$level] = $flags;
 		}
 
+		/*
 		// + events[]
 		if(!file_exists($this->getDataFolder() . "events.json")){
 			file_put_contents($this->getDataFolder() . "events.json", "[]");
@@ -120,7 +119,7 @@ class Main extends PluginBase implements Listener{
 
 		// areaEvents check
 		$this->getLogger()->info(TextFormat::RED . count($this->areas) . " areas set, " . count($this->events) . " area events found");
-
+		*/
 
 	}
 
@@ -565,11 +564,12 @@ class Main extends PluginBase implements Listener{
 
 
 
-	/*
-	 * start Genboy fork edit
-	 * onMove event
+	/* @param PlayerMoveEvent $ev
 	 *
+	 * OnEnter/Leave Genboy fork edit
+	 * onMove event
 	 */
+
 	public function onMove(PlayerMoveEvent $ev)
     {
 
@@ -613,13 +613,13 @@ class Main extends PluginBase implements Listener{
 
 		$player = $ev->getPlayer();
 		// area messages
-		if( $this->textmsg == true   ){
+
 			// leaving Area
-			if( $this->lastArea != '' ){
+			if( $this->lastArea != '' && $this->textmsg == true ){
 				$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
 			}
 			// Enter Area
-			if( $area->getAreaTextField("info") != 'off' ){
+			if( $area->getAreaTextField("info") != 'off' && $this->textmsg == true){
 				$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea; // default
 				if( !empty( $area->getAreaTextField("enter") ) ){
 					$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
@@ -628,20 +628,12 @@ class Main extends PluginBase implements Listener{
 					$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
 				}
 				$player->sendMessage( $msg );
+
 				$this->lastArea = $this->inArea;
 			}else{
 				$this->lastArea = ''; // emtpy last area
 			}
-		}
 
-		// area events
-		if( $areaevents = $this->getAreaEvents($area, $ev) ){
-			foreach( $areaevents as $event){ // all events in this area
-				if( count($event->eventcommand) > 0 ){ // all commands for this event
-					$this->runAreaEventCommands($area,$ev,$event);
-				}
-			} //$player->sendMessage( TextFormat::RED . count($areaevents) . " events in area " . $area->name );
-		}
 	}
 
 	/*
@@ -656,64 +648,10 @@ class Main extends PluginBase implements Listener{
 		$this->lastArea = '';
 	}
 
-	/*
-	 * Run area event commands
-	 * return @var area, event
-	 */
-	public function runAreaEventCommands($area, $ev, $event){
-		// ..area center
-		// ..player pos & direction
-		// event/commmand method??
-		foreach( $event->eventcommand as $command){
-			$this->getServer()->dispatchCommand(new ConsoleCommandSender(), $command);
-		}
-	}
-
-
-	/*
-	 * Area Event
-	 * return @var area, event
-	 */
-	public function getAreaEvents($area, $ev){
-		$player = $ev->getPlayer();
-		$areaevents = [];
-		if( count($this->events) > 0 ){
-			$e = 0;
-			foreach($this->events as $event){
-			 	//$events[] = ["eventname" => $event->eventname, "eventflags" => $event->eventflags, "areaname" => $event->areaname, "eventtime" => $event->eventtime, "eventcommand" => $event->eventcommand, "eventpoints" => $event->eventpoints ];
-				if( $area->name ==  $event->areaname ){
-					$areaevents[$e] = $event;
-				$e++;
-				}
-			}
-		}
-
-		if( count($areaevents) > 0 ){
-			return $areaevents;
-		}else{
-			return false;
-		}
-	}
-
-
-	/*  + events[]  Genboy edit
-	 * Events
-	 */
-	public function saveEvents() : void{
-		$events = [];
-		foreach($this->events as $event){
-			$events[] = ["eventname" => $event->eventname, "eventflags" => $event->eventflags, "areaname" => $event->areaname, "eventtime" => $event->eventtime, "eventcommand" => $event->eventcommand, "eventpoints" => $event->eventpoints ];
-
-			//$events[] = ["name" => $area->getName(), "flags" => $area->getFlags(), "pos1" => [$area->getFirstPosition()->getFloorX(), $area->getFirstPosition()->getFloorY(), $area->getFirstPosition()->getFloorZ()] , "pos2" => [$area->getSecondPosition()->getFloorX(), $area->getSecondPosition()->getFloorY(), $area->getSecondPosition()->getFloorZ()], "level" => $area->getLevelName(), "whitelist" => $area->getWhitelist(), "areatext" => $area->getAreaText()];
-		}
-		file_put_contents($this->getDataFolder() . "events.json", json_encode($events));
-	}
-
-
-
 
 	/*
 	 * Player inside area?
+	 * ! this probably should be replaced with area->contains ?
 	 * return @var bool
 	 */
 	public function isInside($area, $ev){
@@ -760,11 +698,6 @@ class Main extends PluginBase implements Listener{
 	}
 	/*
 	 * end Genboy edit
-	 * sources & examples
-	- https://forums.pmmp.io/threads/keep-getting-this-errors.2904/
-	- http://forums.pocketmine.net/threads/position-playermoveevent.18220/
-	- https://github.com/if-Team/PMMP-Plugins/blob/master/SpeedBlock/src/Khinenw/SpeedBlock/SpeedBlock.php
-	- https://github.com/genboy/FloatingTexter/blob/master/src/FloatingTexter/RefreshTask.php
 	*/
 
 

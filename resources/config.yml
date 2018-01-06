@@ -1,5 +1,17 @@
 # Config file for iProtector by LDX;
 
+# Settings for default area messages
+Text:
+
+  # Display text messages on area enter / leave
+  Textmsg: true
+
+  # Enter area text prefix (followed by areaname)
+  Enter: Enter area
+
+  # Leave area text prefix (followed by areaname)
+  Leave: Leaving area
+
 # Settings for unprotected areas in worlds without specific settings:
 Default:
 

@@ -1,7 +1,7 @@
 # iProtector fork
-PocketMine plugin originaly made by [LDX-MCPE](https://github.com/LDX-MCPE/iProtector), currently maintained by [poggit-orphanage](https://github.com/poggit-orphanage/iProtector) 
+PocketMine plugin made by [LDX-MCPE](https://github.com/LDX-MCPE/iProtector), maintained by [poggit-orphanage](https://github.com/poggit-orphanage/iProtector) 
 
-Default protection settings in onfig.yml file and straight forward commands to create area's and set flags for specific area’s. 
+Default protection settings in config.yml file and straight forward commands to create area's and set flags for specific area’s. 
 
 Command examples:
 - /area <pos1/pos2/create/flag/list/delete>
@@ -14,16 +14,18 @@ usage ie.
 - /area flag Myarea edit false
 - /area flag Myarea touch false
 
-In progress 
+## Testing text edition
 
-- /area text <areaname> <textfield:enter/info/url..> <string>
+Default text variables in config.yml 
+Textmsg true/false and Leave/Enter prefix text (followed by areaname)
+OR 
+set area textfields: 
+enter(replacing the enter-area default text) 
+info (extra description textline)
+url (extra textline not used yet)
+text (extra textline not used yet)
 
-- [x] Enter and leave area detect
-- [x] send notification to player on area enter or leave
-- [x] add command to add area custom messages 
-- [x] add config vars to set default messages for all area's 
-- [x] add config var to turn all messages on/off
-- [ ] add config var to turn all commands on/off
-- [ ] add methode to run commands on player/area
-- [x] add area custom commands
-- [x] much more ideas to work on (events, level/points, artifacts etc.)
+/area text <areaname> <textfield:enter/info/url/text> <string>
+
+Area specific hide text;
+if textfield:info is "off" the area text is turned off

@@ -21,8 +21,9 @@ In progress
 - [x] Enter and leave area detect
 - [x] send notification to player on area enter or leave
 - [x] add command to add area custom messages 
-- [ ] add config vars to set default messages for all area's 
-- [ ] add config var to turn all messages on/off
+- [x] add config vars to set default messages for all area's 
+- [x] add config var to turn all messages on/off
 - [ ] add config var to turn all commands on/off
-- [ ] add area custom commands
+- [ ] add methode to run commands on player/area
+- [x] add area custom commands
 - [x] much more ideas to work on (events, level/points, artifacts etc.)

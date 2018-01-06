@@ -585,10 +585,12 @@ class Main extends PluginBase implements Listener{
 		}
 
 		if( $playerarea != '' ){ // in Area..
-			$this->inArea = $playerarea->getName();
-			if( $this->lastArea != $this->inArea ){ // just entered
+
+			if( $playerarea->getName() != $this->inArea ){ // just entered
+				$this->inArea = $playerarea->getName();
 				$this->onEnterArea($playerarea, $ev);
 			}
+
 		}else{
 			// no area
 			$this->inArea = '';

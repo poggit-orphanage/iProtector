@@ -185,13 +185,6 @@ class Area{
 	}
 
 
-
-
-
-
-
-
-
 	/**
 	 * @return array[]
 	 */
@@ -201,7 +194,6 @@ class Area{
 	/**
 	 * @param string $field
 	 * @param string   $value
-	 *
 	 * @return bool
 	 */
 	public function setAreaTextField(string $field, string $value) : bool{
@@ -223,11 +215,6 @@ class Area{
 		}
 		return '';
 	}
-
-
-
-
-
 
 
 	public function delete() : void{

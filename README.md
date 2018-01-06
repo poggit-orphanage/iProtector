@@ -10,22 +10,26 @@ Command examples:
 - /area create <areaname>
 - /area flag <areaname> <permission>
 
-usage ie.
+usage:
 - /area flag Myarea edit false
 - /area flag Myarea touch false
 
-## Testing text edition
+## Area Text
+Display messages on area enter and leave.
 
-Default text variables in config.yml 
-Textmsg true/false and Leave/Enter prefix text (followed by areaname)
+Textmsg true/false and Leave/Enter prefix text (followed by areaname), default text variables in config.yml 
+
 OR 
+
 set area textfields: 
-enter(replacing the enter-area default text) 
-info (extra description textline)
-url (extra textline not used yet)
-text (extra textline not used yet)
+- enter(replacing the enter-area default text) 
+- info (extra description textline)
+- url (extra textline not used yet)
+- text (extra textline not used yet)
+
+usage:
 
 /area text <areaname> <textfield:enter/info/url/text> <string>
 
-Area specific hide text;
+Hide specific area text
 if textfield:info is "off" the area text is turned off

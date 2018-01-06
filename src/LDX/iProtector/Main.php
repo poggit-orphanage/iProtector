@@ -47,32 +47,20 @@ class Main extends PluginBase implements Listener{
 	/** @var Vector3[] */
 	private $secondPosition = [];
 
-
-	// genboy fork
-	// + default enter/leave text
-	// + player inArea string areaname and lastArea string areaname Genboy edit
-
 	/** @var bool */
 	private $textmsg = false;
-
 	/** @var string */
 	private $entertext = '';
-
 	/** @var string */
 	private $leavetext = '';
-
 	/** @var string */
 	private $inArea = '';
-
 	/** @var string */
 	private $lastArea = '';
 
-
-
 	public function onEnable() : void{
 
-		// fork notice genboy
-		$this->getLogger()->info(TextFormat::GREEN . "iProtector by poggit-orphanage/Genboy fork enabled!");
+		$this->getLogger()->info(TextFormat::GREEN . "iProtector by poggit-orphanage/Genboy fork enabled!"); // fork notice genboy
 
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 		if(!is_dir($this->getDataFolder())){
@@ -89,7 +77,6 @@ class Main extends PluginBase implements Listener{
 		}
 		$data = json_decode(file_get_contents($this->getDataFolder() . "areas.json"), true);
 		foreach($data as $datum){
-			// + textArea[]  Genboy edit
 			new Area($datum["name"], $datum["flags"], new Vector3($datum["pos1"]["0"], $datum["pos1"]["1"], $datum["pos1"]["2"]), new Vector3($datum["pos2"]["0"], $datum["pos2"]["1"], $datum["pos2"]["2"]), $datum["level"], $datum["whitelist"], $datum["areatext"], $this);
 		}
 		$c = yaml_parse_file($this->getDataFolder() . "config.yml");
@@ -98,7 +85,6 @@ class Main extends PluginBase implements Listener{
 		$this->edit = $c["Default"]["Edit"];
 		$this->touch = $c["Default"]["Touch"];
 
-		// + text[]  Genboy edit
 		$this->textmsg = $c["Text"]["Textmsg"];
 		$this->entertext = $c["Text"]["Enter"];
 		$this->leavetext = $c["Text"]["Leave"];
@@ -323,8 +309,6 @@ class Main extends PluginBase implements Listener{
 				}
 				break;
 
-
-			// + text  Genboy edit
 			case "text":
 				if($sender->hasPermission("iprotector") || $sender->hasPermission("iprotector.command") || $sender->hasPermission("iprotector.command.area") || $sender->hasPermission("iprotector.command.area.flag")){
 					if(isset($args[1])){
@@ -339,7 +323,7 @@ class Main extends PluginBase implements Listener{
 									$text = implode(" ", $args);
 									if( ( $field == 'enter' ||  $field == 'info' || $field == 'url' ) && $text !== "" ){
 										if( trim( $text, " ") !== ""){
-											$area->setAreaTextField($field, $text); // ( should validate last string also.. ! )
+											$area->setAreaTextField($field, $text); // ( should validate somehow! )
 											$o = TextFormat::GREEN . "Updated ". $area->getName() ." textfield ". $field ." with '". $text ."'";
 										}else{
 											$area->setAreaTextField($field, 'Enter area');
@@ -364,8 +348,6 @@ class Main extends PluginBase implements Listener{
 					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
 				}
 				break;
-			// end + text Genboy edit
-
 
 			default:
 				return false;
@@ -378,7 +360,6 @@ class Main extends PluginBase implements Listener{
 	public function saveAreas() : void{
 		$areas = [];
 		foreach($this->areas as $area){
-			// + textArea[]  Genboy edit
 			$areas[] = ["name" => $area->getName(), "flags" => $area->getFlags(), "pos1" => [$area->getFirstPosition()->getFloorX(), $area->getFirstPosition()->getFloorY(), $area->getFirstPosition()->getFloorZ()] , "pos2" => [$area->getSecondPosition()->getFloorX(), $area->getSecondPosition()->getFloorY(), $area->getSecondPosition()->getFloorZ()], "level" => $area->getLevelName(), "whitelist" => $area->getWhitelist(), "areatext" => $area->getAreaText()];
 		}
 		file_put_contents($this->getDataFolder() . "areas.json", json_encode($areas));
@@ -547,40 +528,31 @@ class Main extends PluginBase implements Listener{
 	}
 
 
-
-
-
-	/* @param PlayerMoveEvent $ev
-	 *
-	 * OnEnter/Leave Genboy fork edit
-	 * onMove event
+	/*
+	 * @param PlayerMoveEvent $ev
+	 * @var string inArea
+	 * return onEnterArea, onLeaveArea
 	 */
 
 	public function onMove(PlayerMoveEvent $ev)
     {
-
 		$player = $ev->getPlayer(); // get player event
 		$playerName = strtolower($player->getName());
-		$playerarea = '';
+		$playerarea = ''; // area check
 
-		// area check
 		foreach($this->areas as $area){
-			if( $this->isInside($area, $ev) ){
+			if($area->contains($ev->getPlayer()->getPosition(), $ev->getPlayer()->getLevel()->getName() ) ){
 				$playerarea = $area;
 			}
 		}
 
-		if( $playerarea != '' ){ // in Area..
-
+		if( $playerarea != '' ){ // in Area
 			if( $playerarea->getName() != $this->inArea ){ // just entered
 				$this->inArea = $playerarea->getName();
 				$this->onEnterArea($playerarea, $ev);
 			}
-
-		}else{
-			// no area
+		}else{ // not in area
 			$this->inArea = '';
-			// leaving Area
 			if( $this->lastArea != '' ){
 				$this->onLeaveArea($playerarea, $ev);
 			}
@@ -588,43 +560,36 @@ class Main extends PluginBase implements Listener{
 
  	}
 
-
-
-
 	/*
 	 * Enter area
-	 * return @var obj area, event
+	 * @var string lastArea, player msg
 	 */
 	public function onEnterArea($area, $ev){
-
-		$player = $ev->getPlayer();
 		// area messages
-
-			// leaving Area
-			if( $this->lastArea != '' && $this->textmsg == true ){
-				$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
+		$player = $ev->getPlayer();=
+		if( $this->lastArea != '' && $this->textmsg == true ){ // leaving Area msg
+			$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
+		}
+		if( $area->getAreaTextField("info") != 'off' && $this->textmsg == true){ // Enter Area msg
+			$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea;
+			if( !empty( $area->getAreaTextField("enter") ) ){
+				$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
 			}
-			// Enter Area
-			if( $area->getAreaTextField("info") != 'off' && $this->textmsg == true){
-				$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea; // default
-				if( !empty( $area->getAreaTextField("enter") ) ){
-					$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
-				}
-				if( !empty( $area->getAreaTextField("info") ) ){
-					$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
-				}
-				$player->sendMessage( $msg );
-
-				$this->lastArea = $this->inArea;
-			}else{
-				$this->lastArea = ''; // emtpy last area
+			if( !empty( $area->getAreaTextField("info") ) ){
+				$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
 			}
+			$player->sendMessage( $msg );
+
+			$this->lastArea = $this->inArea;
+		}else{
+			$this->lastArea = ''; // empty to not show leaving text
+		}
 
 	}
 
 	/*
 	 * Leave area
-	 * return @var area, event
+	 * return @var lastArea, event
 	 */
 	public function onLeaveArea($area, $ev){
 		$player = $ev->getPlayer();
@@ -633,58 +598,5 @@ class Main extends PluginBase implements Listener{
 		}
 		$this->lastArea = '';
 	}
-
-
-	/*
-	 * Player inside area?
-	 * ! this probably should be replaced with area->contains ?
-	 * return @var bool
-	 */
-	public function isInside($area, $ev){
-
-		$areapos = $this->areaMinMax($area);
-		$plrX = $ev->getTo()->getFloorX();
-		$plrY = $ev->getTo()->getFloorY();
-		$plrZ = $ev->getTo()->getFloorZ();
-		if( $plrX >= $areapos['xmin'] && $plrX <= $areapos['xmax'] &&
-		  	$plrY >= $areapos['ymin'] && $plrY <= $areapos['ymax'] &&
-		  	$plrZ >= $areapos['zmin'] && $plrZ <= $areapos['zmax'] ){
-			return true;
-		}else{
-			return false;
-		}
-	}
-	/*
-	 * Area min/max pos order for difference player pos
-	 * return @var array
-	 */
-	public function areaMinMax($area){
-		if( $area->getFirstPosition()->getFloorX() > $area->getSecondPosition()->getFloorX()){
-			$aXmin = $area->getSecondPosition()->getFloorX();
-			$aXmax = $area->getFirstPosition()->getFloorX();
-		}else{
-			$aXmin = $area->getFirstPosition()->getFloorX();
-			$aXmax = $area->getSecondPosition()->getFloorX();
-		}
-		if( $area->getFirstPosition()->getFloorY() > $area->getSecondPosition()->getFloorY()){
-			$aYmin = $area->getSecondPosition()->getFloorY();
-			$aYmax = $area->getFirstPosition()->getFloorY();
-		}else{
-			$aYmin = $area->getFirstPosition()->getFloorY();
-			$aYmax = $area->getSecondPosition()->getFloorY();
-		}
-		if( $area->getFirstPosition()->getFloorZ() > $area->getSecondPosition()->getFloorZ()){
-			$aZmin = $area->getSecondPosition()->getFloorZ();
-			$aZmax = $area->getFirstPosition()->getFloorZ();
-		}else{
-			$aZmin = $area->getFirstPosition()->getFloorZ();
-			$aZmax = $area->getSecondPosition()->getFloorZ();
-		}
-		return array( 'xmin'=>$aXmin, 'xmax'=>$aXmax, 'ymin'=>$aYmin, 'ymax'=>$aYmax, 'zmin'=>$aZmin, 'zmax'=>$aZmax );
-	}
-	/*
-	 * end Genboy edit
-	*/
-
 
 }

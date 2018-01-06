@@ -48,22 +48,23 @@ class Main extends PluginBase implements Listener{
 	private $secondPosition = [];
 
 
+	// genboy fork
 	// + default enter/leave text
 	// + player inArea string areaname and lastArea string areaname Genboy edit
 
 	/** @var bool */
 	private $textmsg = false;
 
-	/** @var string  */
+	/** @var string */
 	private $entertext = '';
 
-	/** @var string  */
+	/** @var string */
 	private $leavetext = '';
 
-	/** @var string  */
+	/** @var string */
 	private $inArea = '';
 
-	/** @var string (genboy fork) */
+	/** @var string */
 	private $lastArea = '';
 
 
@@ -105,21 +106,6 @@ class Main extends PluginBase implements Listener{
 		foreach($c["Worlds"] as $level => $flags){
 			$this->levels[$level] = $flags;
 		}
-
-		/*
-		// + events[]
-		if(!file_exists($this->getDataFolder() . "events.json")){
-			file_put_contents($this->getDataFolder() . "events.json", "[]");
-		}
-		$eventdata = json_decode(file_get_contents($this->getDataFolder() . "events.json"), true);
-		foreach($eventdata as $event){
-			// + textArea[]  Genboy edit
-			new Events($event["eventname"], $event["eventflags"], $event["areaname"], $event["eventtime"],  $event["eventcommand"],  $event["eventpoints"], $this);
-		}
-
-		// areaEvents check
-		$this->getLogger()->info(TextFormat::RED . count($this->areas) . " areas set, " . count($this->events) . " area events found");
-		*/
 
 	}
 

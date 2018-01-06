@@ -566,7 +566,7 @@ class Main extends PluginBase implements Listener{
 	 */
 	public function onEnterArea($area, $ev){
 		// area messages
-		$player = $ev->getPlayer();=
+		$player = $ev->getPlayer();
 		if( $this->lastArea != '' && $this->textmsg == true ){ // leaving Area msg
 			$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
 		}

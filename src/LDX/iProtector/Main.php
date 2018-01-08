@@ -6,6 +6,7 @@ namespace LDX\iProtector;
 
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\command\ConsoleCommandSender;
 use pocketmine\entity\Entity;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
@@ -18,6 +19,9 @@ use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use pocketmine\Server;
+
+// edit genboy
+use pocketmine\event\player\PlayerMoveEvent;
 
 class Main extends PluginBase implements Listener{
 
@@ -43,7 +47,21 @@ class Main extends PluginBase implements Listener{
 	/** @var Vector3[] */
 	private $secondPosition = [];
 
+	/** @var bool */
+	private $textmsg = false;
+	/** @var string */
+	private $entertext = '';
+	/** @var string */
+	private $leavetext = '';
+	/** @var string */
+	private $inArea = '';
+	/** @var string */
+	private $lastArea = '';
+
 	public function onEnable() : void{
+
+		$this->getLogger()->info(TextFormat::GREEN . "iProtector by poggit-orphanage/Genboy fork enabled!"); // fork notice genboy
+
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 		if(!is_dir($this->getDataFolder())){
 			mkdir($this->getDataFolder());
@@ -59,7 +77,7 @@ class Main extends PluginBase implements Listener{
 		}
 		$data = json_decode(file_get_contents($this->getDataFolder() . "areas.json"), true);
 		foreach($data as $datum){
-			new Area($datum["name"], $datum["flags"], new Vector3($datum["pos1"]["0"], $datum["pos1"]["1"], $datum["pos1"]["2"]), new Vector3($datum["pos2"]["0"], $datum["pos2"]["1"], $datum["pos2"]["2"]), $datum["level"], $datum["whitelist"], $this);
+			new Area($datum["name"], $datum["flags"], new Vector3($datum["pos1"]["0"], $datum["pos1"]["1"], $datum["pos1"]["2"]), new Vector3($datum["pos2"]["0"], $datum["pos2"]["1"], $datum["pos2"]["2"]), $datum["level"], $datum["whitelist"], $datum["areatext"], $this);
 		}
 		$c = yaml_parse_file($this->getDataFolder() . "config.yml");
 
@@ -67,9 +85,14 @@ class Main extends PluginBase implements Listener{
 		$this->edit = $c["Default"]["Edit"];
 		$this->touch = $c["Default"]["Touch"];
 
+		$this->textmsg = $c["Text"]["Textmsg"];
+		$this->entertext = $c["Text"]["Enter"];
+		$this->leavetext = $c["Text"]["Leave"];
+
 		foreach($c["Worlds"] as $level => $flags){
 			$this->levels[$level] = $flags;
 		}
+
 	}
 
 	public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args) : bool{
@@ -115,7 +138,7 @@ class Main extends PluginBase implements Listener{
 					if(isset($args[1])){
 						if(isset($this->firstPosition[$playerName], $this->secondPosition[$playerName])){
 							if(!isset($this->areas[strtolower($args[1])])){
-								new Area(strtolower($args[1]), ["edit" => true, "god" => false, "touch" => true], $this->firstPosition[$playerName], $this->secondPosition[$playerName], $sender->getLevel()->getName(), [$playerName], $this);
+								new Area(strtolower($args[1]), ["edit" => true, "god" => false, "touch" => true], $this->firstPosition[$playerName], $this->secondPosition[$playerName], $sender->getLevel()->getName(), [$playerName], array(), $this);
 								$this->saveAreas();
 								unset($this->firstPosition[$playerName], $this->secondPosition[$playerName]);
 								$o = TextFormat::AQUA . "Area created!";
@@ -285,6 +308,47 @@ class Main extends PluginBase implements Listener{
 					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
 				}
 				break;
+
+			case "text":
+				if($sender->hasPermission("iprotector") || $sender->hasPermission("iprotector.command") || $sender->hasPermission("iprotector.command.area") || $sender->hasPermission("iprotector.command.area.flag")){
+					if(isset($args[1])){
+						if(isset($this->areas[strtolower($args[1])])){
+							$area = $this->areas[strtolower($args[1])];
+							if(isset($args[2])){
+									$field = strtolower($args[2]);
+									// clean args string
+									unset($args[0]);
+									unset($args[1]);
+									unset($args[2]);
+									$text = implode(" ", $args);
+									if( ( $field == 'enter' ||  $field == 'info' || $field == 'url' ) && $text !== "" ){
+										if( trim( $text, " ") !== ""){
+											$area->setAreaTextField($field, $text); // ( should validate somehow! )
+											$o = TextFormat::GREEN . "Updated ". $area->getName() ." textfield ". $field ." with '". $text ."'";
+										}else{
+											$area->setAreaTextField($field, 'Enter area');
+											$o = TextFormat::RED . "Replaced ". $area->getName() ." textfield ". $field ." with default string.";
+										}
+									}else if( $field == 'list'){
+										$o = TextFormat::AQUA . "Area " . $area->getName() . "'s text:" . TextFormat::RESET;
+										foreach($area->getAreaText() as $f => $w){
+											$o .= "\n$f: $w; ";
+										}
+									} // end field set
+							}else{
+								$o = TextFormat::RED . "Please specify a textfield. ( /area text <area> <enter/info/url> <textstring> )";
+							}
+						}else{
+							$o = TextFormat::RED . "Area doesn't exist.";
+						}
+					}else{
+						$o = TextFormat::RED . "Please specify the area you would like to add text to.";
+					}
+				}else{
+					$o = TextFormat::RED . "You do not have permission to use this subcommand.";
+				}
+				break;
+
 			default:
 				return false;
 		}
@@ -296,7 +360,7 @@ class Main extends PluginBase implements Listener{
 	public function saveAreas() : void{
 		$areas = [];
 		foreach($this->areas as $area){
-			$areas[] = ["name" => $area->getName(), "flags" => $area->getFlags(), "pos1" => [$area->getFirstPosition()->getFloorX(), $area->getFirstPosition()->getFloorY(), $area->getFirstPosition()->getFloorZ()] , "pos2" => [$area->getSecondPosition()->getFloorX(), $area->getSecondPosition()->getFloorY(), $area->getSecondPosition()->getFloorZ()], "level" => $area->getLevelName(), "whitelist" => $area->getWhitelist()];
+			$areas[] = ["name" => $area->getName(), "flags" => $area->getFlags(), "pos1" => [$area->getFirstPosition()->getFloorX(), $area->getFirstPosition()->getFloorY(), $area->getFirstPosition()->getFloorZ()] , "pos2" => [$area->getSecondPosition()->getFloorX(), $area->getSecondPosition()->getFloorY(), $area->getSecondPosition()->getFloorZ()], "level" => $area->getLevelName(), "whitelist" => $area->getWhitelist(), "areatext" => $area->getAreaText()];
 		}
 		file_put_contents($this->getDataFolder() . "areas.json", json_encode($areas));
 	}
@@ -461,6 +525,78 @@ class Main extends PluginBase implements Listener{
 				$event->setCancelled();
 			}
 		}
+	}
+
+
+	/*
+	 * @param PlayerMoveEvent $ev
+	 * @var string inArea
+	 * return onEnterArea, onLeaveArea
+	 */
+
+	public function onMove(PlayerMoveEvent $ev)
+    {
+		$player = $ev->getPlayer(); // get player event
+		$playerName = strtolower($player->getName());
+		$playerarea = ''; // area check
+
+		foreach($this->areas as $area){
+			if($area->contains($ev->getPlayer()->getPosition(), $ev->getPlayer()->getLevel()->getName() ) ){
+				$playerarea = $area;
+			}
+		}
+
+		if( $playerarea != '' ){ // in Area
+			if( $playerarea->getName() != $this->inArea ){ // just entered
+				$this->inArea = $playerarea->getName();
+				$this->onEnterArea($playerarea, $ev);
+			}
+		}else{ // not in area
+			$this->inArea = '';
+			if( $this->lastArea != '' ){
+				$this->onLeaveArea($playerarea, $ev);
+			}
+		}
+
+ 	}
+
+	/*
+	 * Enter area
+	 * @var string lastArea, player msg
+	 */
+	public function onEnterArea($area, $ev){
+		// area messages
+		$player = $ev->getPlayer();
+		if( $this->lastArea != '' && $this->textmsg == true ){ // leaving Area msg
+			$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
+		}
+		if( $area->getAreaTextField("info") != 'off' && $this->textmsg == true){ // Enter Area msg
+			$msg = "\n". TextFormat::GREEN . $this->entertext . " " . $this->inArea;
+			if( !empty( $area->getAreaTextField("enter") ) ){
+				$msg = "\n". TextFormat::AQUA . $area->getAreaTextField('enter');
+			}
+			if( !empty( $area->getAreaTextField("info") ) ){
+				$msg .= "\n". TextFormat::AQUA . $area->getAreaTextField('info');
+			}
+			$player->sendMessage( $msg );
+
+			$this->lastArea = $this->inArea;
+		}else{
+			$this->lastArea = ''; // empty to not show leaving text
+		}
+
+	}
+
+	/*
+	 * Leave area
+	 * return @var lastArea, event
+	 */
+	public function onLeaveArea($area, $ev){
+		$player = $ev->getPlayer();
+		if($this->textmsg == true ){
+			$player->sendMessage( TextFormat::RED . $this->leavetext . " " . $this->lastArea );
+		}
+		$this->lastArea = '';
 	}
 
 }

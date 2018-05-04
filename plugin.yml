@@ -3,7 +3,7 @@ author: LDX
 version: 3.1.0-10
 main: LDX\iProtector\Main
 load: POSTWORLD
-api: [3.0.0-ALPHA7, 3.0.0-ALPHA8, 3.0.0-ALPHA9, 3.0.0-ALPHA10, 3.0.0-ALPHA11]
+api: [3.0.0-ALPHA7, 3.0.0-ALPHA8, 3.0.0-ALPHA9, 3.0.0-ALPHA10, 3.0.0-ALPHA11, 3.0.0-ALPHA12]
 website: "https://github.com/LDX-MCPE/iProtector"
 commands:
   area:

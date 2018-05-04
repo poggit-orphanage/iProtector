@@ -1,6 +1,6 @@
-# Config file for iProtector by LDX;
+#Config file for iProtector by LDX;
 
-# Settings for unprotected areas in worlds without specific settings:
+#Settings for unprotected areas in worlds without specific settings:
 Default:
 
   # Keep players from getting hurt?

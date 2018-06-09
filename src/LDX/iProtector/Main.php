@@ -36,8 +36,6 @@ class Main extends PluginBase implements Listener{
 	/** @var bool */
 	private $touch = false;
 	/** @var bool */
-	private $combo = false;
-	/** @var bool[] */
 	private $nofalldamage = false;
 	/** @var bool[] */	
 	private $selectingFirst = [];
@@ -73,7 +71,6 @@ class Main extends PluginBase implements Listener{
 		$this->god = $c["Default"]["God"];
 		$this->edit = $c["Default"]["Edit"];
 		$this->touch = $c["Default"]["Touch"];
-		$this->combo = $c["Default"]["Combo"];
 		$this->nofalldamage = $c["Default"]["Nofalldamage"];
 
 		foreach($c["Worlds"] as $level => $flags){
@@ -341,32 +338,6 @@ class Main extends PluginBase implements Listener{
 	 *
 	 * @return bool
 	 */
-	public function canCombo(Entity $entity) : bool{
-		$o = true;
-		$default = (isset($this->levels[$entity->getLevel()->getName()]) ? $this->levels[$entity->getLevel()->getName()]["Combo"] : $this->combo);
-		if($default){
-			$o = false;
-		}
-		foreach($this->areas as $area){
-			if($area->contains(new Vector3($entity->getX(), $entity->getY(), $entity->getZ()), $entity->getLevel()->getName())){
-				if($default && !$area->getFlag("combo")){
-					$o = true;
-					break;
-				}
-				if($area->getFlag("combo")){
-					$o = false;
-				}
-			}
-		}
-
-		return $o;
-	}
-
-	/**
-	 * @param Entity $entity
-	 *
-	 * @return bool
-	 */
 	public function nfdamage(Entity $entity) : bool{
 		$o = true;
 		$default = (isset($this->levels[$entity->getLevel()->getName()]) ? $this->levels[$entity->getLevel()->getName()]["Nofalldamage"] : $this->nofalldamage);
@@ -522,9 +493,7 @@ class Main extends PluginBase implements Listener{
 			if(!$this->canGetHurt($player)){
 				$event->setCancelled();
 			}
-			if(!$this->canCombo($player)){
-				$event->setCancelled(false);
-			}
+			
 			if($cause == EntityDamageEvent::CAUSE_FALL && !$this->nfdamage($player)){
 				$event->setCancelled(true);
 			}

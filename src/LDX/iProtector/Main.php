@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace LDX\iProtector;
 
+use pocketmine\block\Air;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\entity\Entity;
@@ -398,8 +399,10 @@ class Main extends PluginBase implements Listener{
 	public function onBlockTouch(PlayerInteractEvent $event) : void{
 		$block = $event->getBlock();
 		$player = $event->getPlayer();
-		if(!$this->canTouch($player, $block)){
-			$event->setCancelled();
+		if(!($block instanceof Air)){
+			if(!$this->canTouch($player, $block)){
+				$event->setCancelled();
+			}
 		}
 	}
 

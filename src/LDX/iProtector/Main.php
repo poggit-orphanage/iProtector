@@ -398,8 +398,10 @@ class Main extends PluginBase implements Listener{
 	public function onBlockTouch(PlayerInteractEvent $event) : void{
 		$block = $event->getBlock();
 		$player = $event->getPlayer();
-		if(!$this->canTouch($player, $block)){
-			$event->setCancelled();
+		if($event->getAction() !== PlayerInteractEvent::RIGHT_CLICK_AIR){
+			if(!$this->canTouch($player, $block)){
+				$event->setCancelled();
+			}
 		}
 	}
 

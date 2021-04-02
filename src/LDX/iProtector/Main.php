@@ -12,6 +12,7 @@ use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\event\player\PlayerBucketEvent;
 use pocketmine\level\Position;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
@@ -451,6 +452,18 @@ class Main extends PluginBase implements Listener{
 			if(!$this->canEdit($player, $block)){
 				$event->setCancelled();
 			}
+		}
+	}
+
+	/**
+	 * @param BlockBreakEvent $event
+	 * @ignoreCancelled true
+	 */
+	public function onBucket(PlayerBucketEvent $event) : void{
+		$block = $event->getBlockClicked();
+		$player = $event->getPlayer();
+		if(!$this->canEdit($player, $block)){
+			$event->setCancelled();
 		}
 	}
 

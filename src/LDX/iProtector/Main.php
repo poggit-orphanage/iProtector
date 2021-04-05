@@ -19,6 +19,7 @@ use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use pocketmine\Server;
+use pocketmine\item\FlintSteel;
 
 class Main extends PluginBase implements Listener{
 
@@ -401,6 +402,17 @@ class Main extends PluginBase implements Listener{
 		$player = $event->getPlayer();
 		if(!$this->canTouch($player, $block)){
 			$event->setCancelled();
+			return;
+		}
+		if($event->getAction() === PlayerInteractEvent::RIGHT_CLICK_BLOCK){
+			$item = $event->getItem();
+			if($item instanceof FlintSteel){
+				$blockEdited = $block->getSide($event->getFace());
+				 if(!$this->canEdit($player, $blockEdited)){
+					$event->setCancelled();
+					return;
+				}
+			}
 		}
 	}
 

@@ -468,7 +468,7 @@ class Main extends PluginBase implements Listener{
 	}
 
 	/**
-	 * @param BlockBreakEvent $event
+	 * @param PlayerBucketEvent $event
 	 * @ignoreCancelled true
 	 */
 	public function onBucket(PlayerBucketEvent $event) : void{

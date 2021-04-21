@@ -408,7 +408,7 @@ class Main extends PluginBase implements Listener{
 			$item = $event->getItem();
 			if($item instanceof FlintSteel){
 				$blockEdited = $block->getSide($event->getFace());
-				 if(!$this->canEdit($player, $blockEdited)){
+				if(!$this->canEdit($player, $blockEdited)){
 					$event->setCancelled();
 					return;
 				}
